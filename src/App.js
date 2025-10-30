@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 
@@ -24,20 +24,12 @@ const PomodoroTimer = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (isActive && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((time) => time - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      handleTimerComplete();
-    } else {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [isActive, timeLeft]);
+  const playNotificationSound = useCallback(() => {
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBCWJ0fPTgjMGHm7A7+OZSA0PVqzn7q1aFgxDmN7xuGgjBSOM0vLZhzQHImm98+CWRAwRYLPo7ahXFQxAmN3vwW8gBSuS1vPgizYIJ2+++NKLQQwQWq3o7KdUFQxBmt7wv2wfBTOY2fTjjzcIKXHB8tqMQAwOVKji6KdRFAxAl93uv2wfBTKY2fTijjgIKnLB8tqNQQwPVKni56dRFAw/ltvuw2seBTKX2fTiijgIKnLB89qNQQwPVKni56dRFAw/ltvuwmseBTKX2fTiijgIKnLB89qNQQwOVKni56dRFAw/ltvuwWseBTKX2fTiijgIKnLB89qNQQwOVKni56dRFAw/ltvuv2seBTKX2fTiijgIKnLB89qNQQwOVKni56dRFA');
+    audio.play().catch(() => {});
+  }, []);
 
-  const handleTimerComplete = () => {
+  const handleTimerComplete = useCallback(() => {
     setIsActive(false);
     if (!isBreak) {
       setCompletedPomodoros((prev) => prev + 1);
@@ -49,12 +41,22 @@ const PomodoroTimer = () => {
       setTimeLeft(25 * 60);
       playNotificationSound();
     }
-  };
+  }, [isBreak, playNotificationSound]);
 
-  const playNotificationSound = () => {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBCWJ0fPTgjMGHm7A7+OZSA0PVqzn7q1aFgxDmN7xuGgjBSOM0vLZhzQHImm98+CWRAwRYLPo7ahXFQxAmN3vwW8gBSuS1vPgizYIJ2+++NKLQQwQWq3o7KdUFQxBmt7wv2wfBTOY2fTjjzcIKXHB8tqMQAwOVKji6KdRFAxAl93uv2wfBTKY2fTijjgIKnLB8tqNQQwPVKni56dRFAw/ltvuw2seBTKX2fTiijgIKnLB89qNQQwPVKni56dRFAw/ltvuwmseBTKX2fTiijgIKnLB89qNQQwOVKni56dRFAw/ltvuwWseBTKX2fTiijgIKnLB89qNQQwOVKni56dRFAw/ltvuv2seBTKX2fTiijgIKnLB89qNQQwOVKni56dRFA');
-    audio.play().catch(() => {});
-  };
+  useEffect(() => {
+    if (isActive && timeLeft > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((time) => time - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      handleTimerComplete();
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [isActive, timeLeft, handleTimerComplete]);
+
+  
 
   const handleAuth = (e) => {
     e.preventDefault();
